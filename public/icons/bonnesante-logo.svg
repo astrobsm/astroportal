@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <style>
+      .navy { fill: #1a365d; }
+      .light-navy { fill: #2d5a87; }
+      .accent-navy { fill: #4299e1; }
+      .golden { fill: #ffd700; }
+      .white { fill: #ffffff; }
+    </style>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" class="navy" rx="64"/>
+  
+  <!-- Medical Cross -->
+  <rect x="206" y="128" width="100" height="256" class="white" rx="20"/>
+  <rect x="128" y="206" width="256" height="100" class="white" rx="20"/>
+  
+  <!-- Center Circle with Medical Symbol -->
+  <circle cx="256" cy="256" r="50" class="golden"/>
+  <circle cx="256" cy="256" r="30" class="navy"/>
+  
+  <!-- Bonnesante Text -->
+  <text x="256" y="410" font-family="Georgia, serif" font-size="36" font-weight="bold" text-anchor="middle" class="white">BONNESANTE</text>
+  <text x="256" y="440" font-family="Georgia, serif" font-size="18" text-anchor="middle" class="golden">MEDICALS</text>
+  
+  <!-- Decorative Medical Elements -->
+  <circle cx="128" cy="128" r="15" class="accent-navy"/>
+  <circle cx="384" cy="128" r="15" class="accent-navy"/>
+  <circle cx="128" cy="384" r="15" class="accent-navy"/>
+  <circle cx="384" cy="384" r="15" class="accent-navy"/>
+  
+  <!-- Small plus signs in corners -->
+  <rect x="120" y="120" width="16" height="4" class="golden"/>
+  <rect x="126" y="114" width="4" height="16" class="golden"/>
+  
+  <rect x="376" y="120" width="16" height="4" class="golden"/>
+  <rect x="382" y="114" width="4" height="16" class="golden"/>
+  
+  <rect x="120" y="376" width="16" height="4" class="golden"/>
+  <rect x="126" y="370" width="4" height="16" class="golden"/>
+  
+  <rect x="376" y="376" width="16" height="4" class="golden"/>
+  <rect x="382" y="370" width="4" height="16" class="golden"/>
+</svg>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144" width="144" height="144">
+  <defs>
+    <style>
+      .bg { fill: #2d5a27; }
+      .accent { fill: #ffd700; }
+      .white { fill: #ffffff; }
+    </style>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="144" height="144" class="bg" rx="18"/>
+  
+  <!-- Medical Cross -->
+  <rect x="57" y="36" width="30" height="72" class="white" rx="6"/>
+  <rect x="36" y="57" width="72" height="30" class="white" rx="6"/>
+  
+  <!-- Accent Circle -->
+  <circle cx="72" cy="72" r="12" class="accent"/>
+</svg>

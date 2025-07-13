@@ -1,0 +1,142 @@
+name: Deploy Astro-BSM Portal
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: astro_bsm_portal_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm install
+        cd server && npm install && cd ..
+    
+    - name: Setup test database
+      run: |
+        PGPASSWORD=postgres psql -h localhost -U postgres -d astro_bsm_portal_test -f server/database/schema.sql
+      env:
+        PGPASSWORD: postgres
+    
+    - name: Run tests
+      run: |
+        npm run test
+      env:
+        NODE_ENV: test
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_NAME: astro_bsm_portal_test
+        DB_USER: postgres
+        DB_PASSWORD: postgres
+    
+    - name: Build application
+      run: npm run build
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm install
+        cd server && npm install && cd ..
+    
+    - name: Build application
+      run: npm run build
+    
+    - name: Deploy to DigitalOcean
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.DIGITALOCEAN_HOST }}
+        username: ${{ secrets.DIGITALOCEAN_USERNAME }}
+        key: ${{ secrets.DIGITALOCEAN_SSH_KEY }}
+        port: ${{ secrets.DIGITALOCEAN_PORT }}
+        script: |
+          cd /var/www/astro-bsm-portal
+          git pull origin main
+          npm install
+          cd server && npm install && cd ..
+          npm run build
+          pm2 restart astro-bsm-portal
+
+  deploy-pages:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm install
+    
+    - name: Build for GitHub Pages
+      run: |
+        npm run build
+        echo "astro-bsm-portal.github.io" > dist/CNAME
+      env:
+        VITE_API_BASE_URL: ${{ secrets.PRODUCTION_API_URL }}
+    
+    - name: Setup Pages
+      uses: actions/configure-pages@v3
+    
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v2
+      with:
+        path: './dist'
+    
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v2
