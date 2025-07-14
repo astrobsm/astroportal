@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import pkg from 'pg';
+import { initializeDatabase } from './database/initDatabase.js';
 const { Pool } = pkg;
 
 // ES modules dirname equivalent
@@ -142,12 +143,20 @@ const testDatabaseConnection = async () => {
     `);
     
     const existingTables = tableCheck.rows.map(row => row.table_name);
-    const requiredTables = ['customers', 'products', 'orders', 'notifications', 'distributors'];
+    const requiredTables = ['users', 'products', 'orders', 'events', 'slideshow_images', 'testimonials', 'faqs'];
     const missingTables = requiredTables.filter(table => !existingTables.includes(table));
     
     if (missingTables.length > 0) {
-      console.warn('⚠️  Missing tables:', missingTables);
-      console.log('📋 Existing tables:', existingTables);
+      console.log('📋 Missing tables detected:', missingTables);
+      console.log('� Initializing database schema...');
+      
+      // Run database initialization
+      const initSuccess = await initializeDatabase(pool);
+      if (initSuccess) {
+        console.log('✅ Database schema initialized successfully');
+      } else {
+        console.error('❌ Database schema initialization failed');
+      }
     } else {
       console.log('✅ All required tables exist');
     }
