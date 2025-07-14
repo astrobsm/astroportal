@@ -300,7 +300,6 @@ const ProductDropdown = ({ products, selectedProduct, onProductSelect, placehold
                 {product.category && (
                   <div style={{ 
                     fontSize: '0.75rem', 
-                    color: 'var(--accent-green)',
                     backgroundColor: 'var(--accent-green)',
                     color: 'white',
                     padding: '0.125rem 0.5rem',

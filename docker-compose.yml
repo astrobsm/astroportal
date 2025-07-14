@@ -21,12 +21,12 @@ services:
       timeout: 10s
       retries: 5
 
-  # Backend API
-  backend:
+  # Full-Stack Application (Backend serves Frontend)
+  app:
     build: 
       context: .
-      dockerfile: Dockerfile.backend
-    container_name: astro-backend
+      dockerfile: Dockerfile
+    container_name: astro-app
     environment:
       NODE_ENV: production
       PORT: 3001
@@ -36,7 +36,6 @@ services:
       POSTGRES_USER: astro_user
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       SESSION_SECRET: ${SESSION_SECRET}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:4173}
     ports:
       - "3001:3001"
     volumes:
@@ -46,32 +45,12 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
 
-  # Frontend Application
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    container_name: astro-frontend
-    environment:
-      NODE_ENV: production
-      VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
-    ports:
-      - "4173:4173"
-    depends_on:
-      - backend
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4173"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Nginx Reverse Proxy
+  # Nginx Reverse Proxy (Optional - for custom domain and SSL)
   nginx:
     image: nginx:alpine
     container_name: astro-nginx
@@ -82,9 +61,10 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
     depends_on:
-      - frontend
-      - backend
+      - app
     restart: unless-stopped
+    profiles:
+      - production
 
 volumes:
   postgres_data:

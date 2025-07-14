@@ -42,6 +42,9 @@ app.use(express.json());
 // Static file serving for uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// Serve static files from the React app build directory
+app.use(express.static(path.join(__dirname, '../dist')));
+
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -1762,8 +1765,27 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
+// Catch-all handler: send back React's index.html file for any non-API routes
+app.get('*', (req, res) => {
+  // Skip API routes
+  if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  
+  const indexPath = path.join(__dirname, '../dist/index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).json({ 
+      error: 'Frontend build not found. Please run "npm run build" first.' 
+    });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📱 Frontend served from: http://localhost:${PORT}`);
+  console.log(`🔧 API Health check: http://localhost:${PORT}/api/health`);
+  console.log(`📁 Static uploads: http://localhost:${PORT}/uploads`);
 });

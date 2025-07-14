@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+// Use relative API URL when served from the same origin (production)
+// Use localhost when running in development mode
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
+  (import.meta.env.DEV ? 'http://localhost:3001/api' : '/api');
 
 // Create axios instance with default configuration
 const api = axios.create({

@@ -6,11 +6,9 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-COPY server/package*.json ./server/
 
-# Install dependencies
-RUN npm install --only=production
-RUN cd server && npm install --only=production
+# Install dependencies (including dev dependencies for build)
+RUN npm install
 
 # Copy application code
 COPY . .
@@ -18,21 +16,17 @@ COPY . .
 # Build the frontend
 RUN npm run build
 
+# Remove dev dependencies after build
+RUN npm prune --production
+
 # Create uploads directory
 RUN mkdir -p uploads
 
-# Expose ports
-EXPOSE 3001 4173
+# Expose port (only need one port now)
+EXPOSE 3001
 
 # Set environment to production
 ENV NODE_ENV=production
 
-# Create startup script
-RUN echo '#!/bin/sh\n\
-# Start backend in background\n\
-cd /app/server && npm start &\n\
-# Start frontend\n\
-cd /app && npm run preview' > /app/start.sh && chmod +x /app/start.sh
-
-# Use startup script
-CMD ["/app/start.sh"]
+# Start the backend server (which now serves the frontend)
+CMD ["npm", "run", "server"]
