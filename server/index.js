@@ -18,17 +18,18 @@ const PORT = process.env.PORT || 3001;
 
 // Database connection with optimized pool settings
 const pool = new Pool({
-  user: process.env.DB_USER || 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'astro_bsm_portal',
-  password: process.env.DB_PASSWORD || 'natiss_natiss',
-  port: process.env.DB_PORT || 5432,
+  user: process.env.POSTGRES_USER || process.env.DB_USER || 'postgres',
+  host: process.env.POSTGRES_HOST || process.env.DB_HOST || 'localhost',
+  database: process.env.POSTGRES_DB || process.env.DB_NAME || 'astro_bsm_portal',
+  password: process.env.POSTGRES_PASSWORD || process.env.DB_PASSWORD || 'natiss_natiss',
+  port: process.env.POSTGRES_PORT || process.env.DB_PORT || 5432,
   // Connection pool optimization
   max: 20, // Maximum number of clients in the pool
   min: 2,  // Minimum number of clients in the pool
   idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-  connectionTimeoutMillis: 5000, // Return an error after 5 seconds if connection could not be established
+  connectionTimeoutMillis: 10000, // Increased timeout for remote DB
   maxUses: 7500, // Close (and replace) a connection after it has been used 7500 times
+  // SSL configuration for Digital Ocean managed database
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   // Enable keep-alive for better performance
   keepAlive: true,
