@@ -1783,11 +1783,36 @@ app.get('*', (req, res) => {
   }
   
   const indexPath = path.join(__dirname, '../dist/index.html');
+  const distDir = path.join(__dirname, '../dist');
+  
   if (fs.existsSync(indexPath)) {
     res.sendFile(indexPath);
   } else {
-    res.status(404).json({ 
-      error: 'Frontend build not found. Please run "npm run build" first.' 
+    console.log('⚠️  Frontend build files not found');
+    console.log('📁 Checking dist directory:', distDir);
+    console.log('📄 Looking for index.html at:', indexPath);
+    
+    // Check if dist directory exists
+    if (!fs.existsSync(distDir)) {
+      console.log('❌ Dist directory does not exist');
+    } else {
+      console.log('📋 Files in dist directory:', fs.readdirSync(distDir));
+    }
+    
+    // Return a helpful error with instructions
+    res.status(503).json({ 
+      error: 'Frontend build not found. Please run "npm run build" first.',
+      details: {
+        distPath: distDir,
+        indexPath: indexPath,
+        distExists: fs.existsSync(distDir),
+        indexExists: fs.existsSync(indexPath)
+      },
+      instructions: [
+        'Build Command should be: npm ci && npm run build',
+        'Run Command should be: npm run server',
+        'Make sure Vite is in dependencies, not devDependencies'
+      ]
     });
   }
 });
