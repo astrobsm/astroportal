@@ -119,6 +119,49 @@ CREATE TABLE IF NOT EXISTS faqs (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Distributors table
+CREATE TABLE IF NOT EXISTS distributors (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    region VARCHAR(100),
+    contact_person VARCHAR(255),
+    phone VARCHAR(50),
+    email VARCHAR(255),
+    address TEXT,
+    coverage_areas TEXT[],
+    specialties TEXT[],
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Customers table (for detailed customer management)
+CREATE TABLE IF NOT EXISTS customers (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
+    phone VARCHAR(50),
+    address TEXT,
+    company VARCHAR(255),
+    notes TEXT,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Notifications table (for system notifications)
+CREATE TABLE IF NOT EXISTS notifications (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    message TEXT,
+    type VARCHAR(50) DEFAULT 'info' CHECK (type IN ('info', 'warning', 'error', 'success')),
+    target_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    is_read BOOLEAN DEFAULT false,
+    is_global BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
@@ -132,6 +175,13 @@ CREATE INDEX IF NOT EXISTS idx_events_active ON events(is_active);
 CREATE INDEX IF NOT EXISTS idx_slideshow_active ON slideshow_images(is_active);
 CREATE INDEX IF NOT EXISTS idx_testimonials_active ON testimonials(is_active);
 CREATE INDEX IF NOT EXISTS idx_faqs_active ON faqs(is_active);
+CREATE INDEX IF NOT EXISTS idx_distributors_active ON distributors(is_active);
+CREATE INDEX IF NOT EXISTS idx_distributors_region ON distributors(region);
+CREATE INDEX IF NOT EXISTS idx_customers_active ON customers(is_active);
+CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(target_user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_global ON notifications(is_global);
+CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(is_read);
 
 -- Insert some sample data
 INSERT INTO products (name, description, category, in_stock) VALUES

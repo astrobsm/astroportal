@@ -1285,68 +1285,114 @@ app.get('/api/sync/download', async (req, res) => {
       const syncDate = new Date(lastSync);
       
       // Fetch updated orders
-      const ordersResult = await pool.query(
-        'SELECT * FROM orders WHERE updated_at > $1',
-        [syncDate]
-      );
-      updates.orders = ordersResult.rows.map(order => ({
-        ...order,
-        products: typeof order.products === 'string' ? JSON.parse(order.products) : order.products
-      }));
+      try {
+        const ordersResult = await pool.query(
+          'SELECT * FROM orders WHERE updated_at > $1',
+          [syncDate]
+        );
+        updates.orders = ordersResult.rows.map(order => ({
+          ...order,
+          products: typeof order.products === 'string' ? JSON.parse(order.products) : order.products
+        }));
+      } catch (error) {
+        console.error('Error fetching orders for sync:', error);
+      }
       
-      // Fetch updated customers
-      const customersResult = await pool.query(
-        'SELECT * FROM customers WHERE updated_at > $1',
-        [syncDate]
-      );
-      updates.customers = customersResult.rows;
+      // Fetch updated customers (handle missing table)
+      try {
+        const customersResult = await pool.query(
+          'SELECT * FROM customers WHERE updated_at > $1',
+          [syncDate]
+        );
+        updates.customers = customersResult.rows;
+      } catch (error) {
+        console.error('Error fetching customers for sync (table may not exist):', error);
+      }
       
       // Fetch updated products
-      const productsResult = await pool.query(
-        'SELECT * FROM products WHERE updated_at > $1',
-        [syncDate]
-      );
-      updates.products = productsResult.rows;
+      try {
+        const productsResult = await pool.query(
+          'SELECT * FROM products WHERE updated_at > $1',
+          [syncDate]
+        );
+        updates.products = productsResult.rows;
+      } catch (error) {
+        console.error('Error fetching products for sync:', error);
+      }
       
-      // Fetch new notifications
-      const notificationsResult = await pool.query(
-        'SELECT * FROM notifications WHERE created_at > $1',
-        [syncDate]
-      );
-      updates.notifications = notificationsResult.rows;
+      // Fetch new notifications (handle missing table)
+      try {
+        const notificationsResult = await pool.query(
+          'SELECT * FROM notifications WHERE created_at > $1',
+          [syncDate]
+        );
+        updates.notifications = notificationsResult.rows;
+      } catch (error) {
+        console.error('Error fetching notifications for sync (table may not exist):', error);
+      }
     } else {
-      // If no lastSync or invalid date, return all data
-      const [ordersResult, customersResult, productsResult, notificationsResult] = await Promise.all([
-        pool.query('SELECT * FROM orders ORDER BY created_at DESC'),
-        pool.query('SELECT * FROM customers ORDER BY created_at DESC'),
-        pool.query('SELECT * FROM products ORDER BY created_at DESC'),
-        pool.query('SELECT * FROM notifications ORDER BY created_at DESC')
-      ]);
-      
-      updates.orders = ordersResult.rows.map(order => ({
-        ...order,
-        products: typeof order.products === 'string' ? JSON.parse(order.products) : order.products
-      }));
-      updates.customers = customersResult.rows;
-      updates.products = productsResult.rows;
-      updates.notifications = notificationsResult.rows;
+      // If no lastSync or invalid date, return all data with error handling
+      try {
+        const ordersResult = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
+        updates.orders = ordersResult.rows.map(order => ({
+          ...order,
+          products: typeof order.products === 'string' ? JSON.parse(order.products) : order.products
+        }));
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      }
+
+      try {
+        const customersResult = await pool.query('SELECT * FROM customers ORDER BY created_at DESC');
+        updates.customers = customersResult.rows;
+      } catch (error) {
+        console.error('Error fetching customers (table may not exist):', error);
+      }
+
+      try {
+        const productsResult = await pool.query('SELECT * FROM products ORDER BY created_at DESC');
+        updates.products = productsResult.rows;
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      }
+
+      try {
+        const notificationsResult = await pool.query('SELECT * FROM notifications ORDER BY created_at DESC');
+        updates.notifications = notificationsResult.rows;
+      } catch (error) {
+        console.error('Error fetching notifications (table may not exist):', error);
+      }
     }
     
-    res.json(updates);
+    res.json({
+      success: true,
+      data: updates,
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
     console.error('Error downloading updates:', error);
-    res.status(500).json({ error: 'Failed to download updates' });
+    res.status(500).json({ 
+      error: 'Failed to download updates',
+      details: error.message 
+    });
   }
 });
 
 // Distributors routes
 app.get('/api/distributors', async (req, res) => {
   try {
+    // Check if distributors table exists first
     const result = await pool.query('SELECT * FROM distributors WHERE is_active = true ORDER BY region');
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching distributors:', error);
-    res.status(500).json({ error: 'Failed to fetch distributors' });
+    // If table doesn't exist, return empty array instead of error
+    if (error.code === '42P01') { // Table does not exist
+      console.log('Distributors table does not exist, returning empty array');
+      res.json([]);
+    } else {
+      res.status(500).json({ error: 'Failed to fetch distributors' });
+    }
   }
 });
 
